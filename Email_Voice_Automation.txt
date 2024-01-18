@@ -1,0 +1,96 @@
+import smtplib
+import speech_recognition as sr
+from email.message import EmailMessage
+import pyttsx3
+
+# Initialize the speech recognition and text-to-speech engines
+listener = sr.Recognizer()
+tts = pyttsx3.init()
+
+# Function to make the program speak
+def talk(text):
+    tts.say(text)
+    tts.runAndWait()
+
+# Function to listen to the microphone input
+def mic(timeout=30):
+    with sr.Microphone() as source:
+        print("Program is listening...")
+        try:
+            voice = listener.listen(source, timeout=timeout)
+            data = listener.recognize_google(voice)
+            print(data)
+            return data.lower()
+        except sr.WaitTimeoutError:
+            print("Timeout. Please speak again.")
+            return None
+
+# Function to get recipient information (name and email)
+def get_receiver_info():
+    talk("To whom do you want to send this email?")
+    
+    while True:
+        # Ask for the name
+        talk("Please speak the name of the recipient.")
+        name = mic()
+        if name:
+            break
+    
+    while True:
+        # Ask for the email address
+        talk(f"Please speak the email address of {name}.")
+        email = mic()
+        if email:
+            break
+    
+    # Remove spaces from the email address
+    email = email.replace(" ", "")
+    
+    return name, email
+
+# Function to send the email
+def send_mail(receiver, subject, body):
+    # Connect to the Gmail SMTP server
+    server = smtplib.SMTP("smtp.gmail.com", 587)
+    server.starttls()
+    server.login("User Login Gmail", "Two step varification and then app password")
+
+    # Create an EmailMessage object
+    email = EmailMessage()
+    email["From"] = "Sender Gmail-id"
+    email["To"] = receiver
+    email["Subject"] = subject
+    email.set_content(body)
+
+    # Send the email
+    server.send_message(email)
+    server.quit()
+
+# Main function to execute the program
+def main_code():
+    # Get recipient information
+    name, email = get_receiver_info()
+    
+    # Update the dictionary with the new receiver information
+    receiver_dict = {name: email}
+    
+    while True:
+        # Ask for the subject
+        talk("Please speak the subject of the email.")
+        subject = mic()
+        if subject:
+            break
+    
+    while True:
+        # Ask for the message
+        talk("Please speak the message of the email.")
+        body = mic()
+        if body:
+            break
+    
+    # Send the email
+    send_mail(receiver_dict[name], subject, body)
+    print("Your email has been sent!!")
+
+# Call the main function to start the program
+main_code()
